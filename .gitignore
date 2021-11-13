@@ -1,3 +1,6 @@
 .vscode/
 a.out
 segtree
+
+# This is for the compiled module's build folder
+build/
