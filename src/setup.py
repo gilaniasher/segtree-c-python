@@ -10,9 +10,12 @@ Installing the library:
 
 Using:
   import segtree
-  obj = segtree.Segtree([1,2,3,4])
+  obj = segtree.Segtree([1,2,3,4], 'sum')
   obj.sum(0, 2)
   obj.update(1, 35)
+
+  obj = segtree.Segtree([1,2,3,4], 'min')
+  obj.min(0, 2)
 '''
 
 from distutils.core import setup, Extension

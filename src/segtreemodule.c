@@ -6,6 +6,7 @@ typedef struct {
   PyObject_HEAD
   int *tree;
   int length; // Input arr len, not tree len
+  int (*op)(int,int); // Query operation (min,max, or sum)
 } SegtreeObject;
 
 static void Segtree_dealloc(SegtreeObject *self) {
@@ -26,9 +27,19 @@ static PyObject *Segtree_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
 static int Segtree_init(SegtreeObject *self, PyObject *args, PyObject *kwds) {
   PyObject *pList;
+  char *type;
 
-  if (!PyArg_ParseTuple(args, "O!", &PyList_Type, &pList)) {
+  if (!PyArg_ParseTuple(args, "O!s", &PyList_Type, &pList, &type)) {
     PyErr_SetString(PyExc_TypeError, "Parameter must be a list");
+    return -1;
+  }
+
+  // Set the query type (min/max/sum) and store it in self->op
+  if (!strcmp(type, "min")) self->op = min;
+  else if (!strcmp(type, "max")) self->op = max;
+  else if (!strcmp(type, "sum")) self->op = sum;
+  else {
+    PyErr_SetString(PyExc_TypeError, "Query type must be either 'min', 'max', or 'sum'");
     return -1;
   }
 
@@ -36,7 +47,7 @@ static int Segtree_init(SegtreeObject *self, PyObject *args, PyObject *kwds) {
   self->length = n;
   self->tree = malloc(sizeof(int) * 4 * n);
 
-  // This input array will be given to segtree for building the tree
+  // Build input array which will be given to segtree for building the tree
   int *input = malloc(sizeof(int) * n);
 
   if (self->tree == NULL || input == NULL)
@@ -54,7 +65,7 @@ static int Segtree_init(SegtreeObject *self, PyObject *args, PyObject *kwds) {
   }
 
   // Now that temp is initalized with our Python list, build the actual tree
-  build(self->tree, input, 1, 0, n-1);
+  build(self->tree, self->op, input, 1, 0, n-1);
   free(input);
 
   return 0;
@@ -62,6 +73,11 @@ static int Segtree_init(SegtreeObject *self, PyObject *args, PyObject *kwds) {
 
 static PyObject *Segtree_sum(SegtreeObject *self, PyObject *args) {
   int idx1, idx2;
+
+  if (self->op != sum) {
+    PyErr_SetString(PyExc_TypeError, "Sum was called but this Segment Tree was not initialized for sum queries");
+    return NULL;
+  }
 
   if (!PyArg_ParseTuple(args, "ii", &idx1, &idx2))
     return NULL;
@@ -71,7 +87,47 @@ static PyObject *Segtree_sum(SegtreeObject *self, PyObject *args) {
     return NULL;
   }
 
-  int ans = sum(self->tree, 1, 0, self->length-1, idx1, idx2);
+  int ans = query(self->tree, self->op, 1, 0, self->length-1, idx1, idx2);
+  return PyLong_FromLong((long) ans);
+}
+
+static PyObject *Segtree_min(SegtreeObject *self, PyObject *args) {
+  int idx1, idx2;
+
+  if (self->op != min) {
+    PyErr_SetString(PyExc_TypeError, "Min was called but this Segment Tree was not initialized for min queries");
+    return NULL;
+  }
+
+  if (!PyArg_ParseTuple(args, "ii", &idx1, &idx2))
+    return NULL;
+
+  if (!(0 <= idx1 && idx1 <= idx2 && idx2 < self->length)) {
+    PyErr_SetString(PyExc_IndexError, "Invalid indexes provided");
+    return NULL;
+  }
+
+  int ans = query(self->tree, self->op, 1, 0, self->length-1, idx1, idx2);
+  return PyLong_FromLong((long) ans);
+}
+
+static PyObject *Segtree_max(SegtreeObject *self, PyObject *args) {
+  int idx1, idx2;
+
+  if (self->op != max) {
+    PyErr_SetString(PyExc_TypeError, "Max was called but this Segment Tree was not initialized for max queries");
+    return NULL;
+  }
+
+  if (!PyArg_ParseTuple(args, "ii", &idx1, &idx2))
+    return NULL;
+
+  if (!(0 <= idx1 && idx1 <= idx2 && idx2 < self->length)) {
+    PyErr_SetString(PyExc_IndexError, "Invalid indexes provided");
+    return NULL;
+  }
+
+  int ans = query(self->tree, self->op, 1, 0, self->length-1, idx1, idx2);
   return PyLong_FromLong((long) ans);
 }
 
@@ -86,7 +142,7 @@ static PyObject *Segtree_update(SegtreeObject *self, PyObject *args, PyObject *k
     return NULL;
   }
 
-  update(self->tree, 1, 0, self->length-1, idx, newVal);
+  update(self->tree, self->op, 1, 0, self->length-1, idx, newVal);
 
   Py_INCREF(Py_None);
   return Py_None;
@@ -94,6 +150,8 @@ static PyObject *Segtree_update(SegtreeObject *self, PyObject *args, PyObject *k
 
 static PyMethodDef Segtree_methods[] = {
   {"sum", (PyCFunction) Segtree_sum, METH_VARARGS, PyDoc_STR("sum(idx1, idx2) -> int")},
+  {"min", (PyCFunction) Segtree_min, METH_VARARGS, PyDoc_STR("min(idx1, idx2) -> int")},
+  {"max", (PyCFunction) Segtree_max, METH_VARARGS, PyDoc_STR("max(idx1, idx2) -> int")},
   {"update", (PyCFunction) Segtree_update, METH_VARARGS, PyDoc_STR("update(idx, newVal) -> None")},
   {NULL, NULL} 
 };
