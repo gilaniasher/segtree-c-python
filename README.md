@@ -1,7 +1,7 @@
 # Segment Tree written in C as a Python Module
-I am a big fan of C even though I tend to use Python for my daily workloads. I wanted to learn more about [Segment Trees](https://en.wikipedia.org/wiki/Segment_tree) so I decided to write one in C and make it available as a Python module.
+I wanted to learn more about [Segment Trees](https://en.wikipedia.org/wiki/Segment_tree) so I decided to write one in C and make it available as a Python module. My library supports basic min/max/sum queries.
 
-My library supports basic min/max/sum queries.
+[PyPI Link](https://pypi.org/project/c-segment-tree/)
 
 ## Usage
 ```
@@ -13,8 +13,14 @@ My library supports basic min/max/sum queries.
 
 You can also use `obj.min` or `obj.max` if you initialized with min/max intead of sum.
 
-## Building and Installing
-I want to make this available through pip, but for now it has to be built locally and installed. You may need to run `sudo apt install python3-dev` beforehand.
+## Pip Installation
+```
+$ pip3 install c-segment-tree
+```
+
+## Building and Installing Locally
+
+If you want to alter the code and try this yourself, this is how you can build/install locally. You may need to run `sudo apt install python3-dev` beforehand.
 
 Navigate into the `src/` directory and we will be using `setup.py` to build and install.
 
