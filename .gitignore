@@ -4,3 +4,5 @@ segtree
 
 # This is for the compiled module's build folder
 build/
+c_segment_tree.egg-info/
+dist/
